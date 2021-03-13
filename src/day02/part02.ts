@@ -8,9 +8,9 @@ const input = readFileSync('./input.txt', 'utf-8').split('\n').map(line => {
     var key = b[0];
     var [min, max] = a.split("-").map(num => parseInt(num));
     //1 based indexes, so min-1
-    //also, max-1 is represented by just max, because slice slices up to the nth element but doesn't include
     var first = password[min-1] === key;
     var second = password[max-1] === key;
+    //budget XOR
     if (first !== second)
         valid++;
 
