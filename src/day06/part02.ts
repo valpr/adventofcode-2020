@@ -1,6 +1,5 @@
 import { readFileSync } from 'fs';
 let yesTracker: {[k: string]: number} = {};
-let num = 0;
 let totalnum = 0;
 let currentGroupSize = 0;
 
@@ -14,9 +13,6 @@ const input = readFileSync('./input.txt', 'utf-8').split('\n').map(line => line.
             }
             else if (yesTracker[line[i]]){
                 yesTracker[line[i]]++;
-                if (yesTracker[line[i]] !== currentGroupSize) {
-                    delete yesTracker[line[i]];
-                }
             }
         }
     } else {
