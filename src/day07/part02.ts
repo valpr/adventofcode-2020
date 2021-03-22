@@ -1,7 +1,6 @@
 import { readFileSync } from 'fs';
 let bagContains: {[bag: string]: {[color: string]: number}} = {};
 let key = 'shiny gold';
-let counter = 0;
 readFileSync('./input.txt', 'utf-8').split('\n').map(line => line.trim()).map(line => {
     //parsing each rule plan
     //each type is identified by [adjective] [color]
