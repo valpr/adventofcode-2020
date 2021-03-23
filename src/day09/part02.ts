@@ -53,7 +53,6 @@ start = 0;
 end = 1;
 let currNumber = input[start] + input[end];
 while (currNumber !== input[found]){
-    console.log(currNumber);
     if (currNumber < input[found]) {
         end++;
         currNumber += input[end];
@@ -63,13 +62,10 @@ while (currNumber !== input[found]){
         start++;
     }
 }
-console.log(currNumber)
-console.log(start);
-console.log(end);
+//find lowest/highest in range
 let lowest = input[start];
 let highest = input[end];
 for (let k = start; k <= end; k++) {
-    console.log(input[k]);
     lowest = Math.min(lowest, input[k]);
     highest = Math.max(highest, input[k])
 }
