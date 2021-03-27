@@ -4,15 +4,16 @@ let input: string[] = readFileSync('./input.txt', 'utf-8').split('\n').map(line 
 let memory: {[key: number]: number} = {};
 let currentMask: string[] = [];
 const start = "000000000000000000000000000000000000";
-const lowestPow = 35;
+const originalLength = 35;
 let addresses: number[] = [];
+const base = 2;
 const expand = (keyString: string, number: number) => {
     //this is a memory address decoder--populates addresses array with values
     if (!keyString){ //when string is empty, stop and add to addresses
         addresses.push(number)
     }
     else {
-        let power = Math.pow(2, lowestPow-(keyString.length-1));
+        let power = Math.pow(base, originalLength-(keyString.length-1));
         switch(currentMask[keyString.length-1]){
             //evaluate last char of string
             case '1':
