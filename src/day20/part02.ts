@@ -1,4 +1,5 @@
 import {readFileSync} from 'fs';
+import { connect } from 'node:http2';
 let tiles: string[] = readFileSync('./input.txt', 'utf-8').split('\r\n\r\n');
 //problem is now need to assemble picture
 //then search the image for sea monsters
@@ -21,7 +22,8 @@ type Edge = { //Add # Number?
 type Square = {
     ID: number;
     connectedTo: number[];
-    unmatchedEdges: Edge[];
+    edges: Edge[];
+    tile: string[];
 }
 
 type EdgeCollection = {
@@ -37,12 +39,15 @@ const parseSquare = (tile: string):Square => {
     const lines = square.split('\r\n');
     const edges = parseEdges(lines, parseInt(ID.split(' ')[1]));
     return {
-        ID: parseInt(ID.split(' ')[1]), connectedTo: [], unmatchedEdges: edges
+        ID: parseInt(ID.split(' ')[1]), connectedTo: [], edges, tile: lines
     }
 }
 
 const parseEdges = (tileArray: string[], ID: number): Edge[] => {
-    let sides = [getSide(tileArray, 0), getSide(tileArray, tileArray[0].length-1), tileArray[0], tileArray[tileArray.length-1]];
+    let sides = [getSide(tileArray, 0).split('').reverse().join(''),
+     tileArray[0], //top
+     getSide(tileArray, tileArray[0].length-1), 
+     tileArray[tileArray.length-1]];
     let edges :Edge[] = sides.map((side) =>  {
         let reverseSide = side.split('').reverse().join('');
         let count = side.split('').filter(x => x === '#').length
@@ -67,8 +72,11 @@ const getSide = (tileArray: string[], index: number): string => {
 
 
 let sqArray: Square[] = [];
+let sqDict: {[id: number]: Square} = {};
 for (let rep of tiles) {
-    sqArray.push(parseSquare(rep));
+    let newSq = parseSquare(rep);
+    sqArray.push(newSq);
+    sqDict[newSq.ID] = newSq;
 }
 
 //TODO: assemble picture here
@@ -76,14 +84,16 @@ for (let rep of tiles) {
 //also need methods to rotate array
 //[ 1049, 2081, 2129, 3229 ] is corner edge array
 
-const flipOnX = (square: string[]) => {
+const flipOnY = (square: string[]) => { //
+    let newSquare = [];
+
     for (let line of square) {
-        line = line.split('').reverse().join('');
+        newSquare.push(line.split('').reverse().join(''));
     }
-    return square;
+    return newSquare;
 }
 
-const flipOnY = (square: string[]) => {
+const flipOnX = (square: string[]) => {
     for (let i =0; i < square.length/2; i++ ) {
         const temp = square[i];
         square[i] = square[square.length-1-i];
@@ -92,13 +102,18 @@ const flipOnY = (square: string[]) => {
     return square;
 }
 
-const rotate90 = (square: string[], counter: boolean) => {
-    let newSquare = Array(square.length).fill([]);
+const rotate90 = (square: string[], counter: boolean): string[] => {
+    let newSquare: string[] = Array(square.length).fill([]);
     for (let line of square) {
         for (let [idx, char] of line.split('').entries()) {
-            counter ? newSquare[idx].push(char) : newSquare[idx].unshift(char);       
+            if (counter){
+                newSquare[idx]=`${newSquare[idx]}${char}`
+            } else {
+                newSquare[idx]=`${char}${newSquare[idx]}`
+            }
         }
     }
+    return newSquare;
 }
 
 const rotate180 = (square: string[]) => {
@@ -106,6 +121,126 @@ const rotate180 = (square: string[]) => {
     square = flipOnY(square);
     return square;
 }
+
+/*TODO: logic for assembling square
+start with corner X using square dict
+find the 2 squares that connect with it in EdgeCollection (using edges)
+find which edges are connected on square X
+*/
+let picture : string[][] = [];
+let pictureTiles :number[][] = [];
+
+//Logic for attaching a tile to a tile on the left
+//if the left edge connects nothing, if the left edge reverse connects, flip Y
+//if the right edge connects flip tile by Y, if the right edge reverse connects, rotate 180
+//if the top edge connects, rotate 90 counter clock, if reverse connects, rotate90 counter and flip y
+//if the bottom edge connects rotate 90 clockwise, if referse connects, rotate 90 clock and flip y
+
+//FIRST STEP: find out which edges on firstCorner are matching
+//connected if edge length is 2
+// console.log(allEdges[left.representation], allEdges[left.reverseRepresentation]);
+// console.log(allEdges[right.representation], allEdges[right.reverseRepresentation]);
+// console.log(allEdges[top.representation], allEdges[top.reverseRepresentation]);
+// console.log(allEdges[bottom.representation], allEdges[bottom.reverseRepresentation]);
+//2081 has right connection and bottom connection without rotating so start here
+//IDEA: do left edge first, then expand right
+
+/*
+End result of this function is to insert into picture the right tile string representation
+    //Logic for attaching a tile to a tile above it
+    //if top edge connects, nothing, if top edge reverse connects, flip y
+    //if left edge connects, rotate 90 clock, if left edge R connects, rotate 90 clock and flip on y
+    //if right edge connects, rotate 90 counterclock, if right edge R connects, rotate 90 counterclock and flip on y
+    //if bottom edge connects, flip on x, if bottom edge R connects, rotate 180
+    //when flipping or rotating, should re-arrange square edges?
+*/
+const connectBottom = (currentSquare: Square, edgeAbove: string) => {
+    // console.log(currentSquare);
+    let [left, top, right, bottom] = currentSquare.edges;
+    let newTransform = currentSquare.tile;
+    let currentTile = currentSquare.tile;
+    pictureTiles.push([currentSquare.ID]);
+    // console.log('before', newTransform.join('\r\n'));
+    let actionTaken = '';
+    if (currentSquare.ID === 2659){
+        console.log(currentTile.join('\r\n'));
+        console.log('edge to match:')
+        console.log(edgeAbove);
+        console.log('claimed match');
+        console.log(top.reverseRepresentation);
+    }
+    if (top.representation === edgeAbove){
+        //just add into picture
+        actionTaken = `${currentSquare.ID} top`
+        picture.push(newTransform);
+    }
+    else if (top.reverseRepresentation === edgeAbove) {
+        actionTaken = `${currentSquare.ID} topr`
+        newTransform = flipOnY(currentTile)
+        picture.push(newTransform);
+    }
+    else if (bottom.representation === edgeAbove){
+        //just add into picture
+        actionTaken = `${currentSquare.ID} bottom`
+
+        newTransform = flipOnX(currentTile);
+        picture.push(newTransform);
+    }
+    else if (bottom.reverseRepresentation === edgeAbove) {
+        actionTaken = `${currentSquare.ID} bottomR`
+
+        newTransform = rotate180(currentTile)
+        picture.push(newTransform);
+    }
+    else if (left.representation === edgeAbove){
+        actionTaken = `${currentSquare.ID} left`
+
+        newTransform = rotate90(currentTile, false)
+        picture.push(newTransform);
+    }
+    else if (left.reverseRepresentation === edgeAbove){
+        actionTaken = `${currentSquare.ID} leftr`
+
+        newTransform = flipOnY(rotate90(currentTile, false));
+        picture.push(newTransform);
+    }
+    else if (right.representation === edgeAbove){
+        actionTaken = `${currentSquare.ID} right`
+
+        newTransform = rotate90(currentTile, true)
+        picture.push(newTransform);
+    }
+    else if (right.reverseRepresentation === edgeAbove){
+        actionTaken = `${currentSquare.ID} rightr`
+        //this trans is screwed RN, counter clockwise doesn't work
+        newTransform = flipOnY(rotate90(currentTile, true));
+        picture.push(newTransform);
+    }
+    else {
+        actionTaken = `corner`;
+        picture.push(newTransform);
+    }
+    //take the bottom of newTransform and look in edge dictionary
+    console.log('Action:', actionTaken);
+    let bottomEdge = newTransform[newTransform.length-1];
+    let connectingEdge = (allEdges[bottomEdge] || allEdges[bottomEdge.split('').reverse().join('')]).filter(x => x!==currentSquare.ID);
+    if (connectingEdge.length !== 0 && currentSquare.ID !== 2659)
+        connectBottom(sqDict[connectingEdge[0]], bottomEdge);
+    else {
+        // console.log(bottomEdge, allEdges[bottomEdge])
+        // console.log(allEdges[bottomEdge.split('').reverse().join('')])
+    }
+}
+connectBottom(sqDict[2081], '');
+
+
+let counter = 0;
+for (let tile of picture){
+    console.log(tile.join('\r\n'));
+    console.log(pictureTiles[counter],'---');
+    counter++;
+}
+console.log(pictureTiles);
 
 
 //TODO: search for sea monster here:
