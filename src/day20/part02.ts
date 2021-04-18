@@ -1,5 +1,4 @@
 import {readFileSync} from 'fs';
-import { connect } from 'node:http2';
 let tiles: string[] = readFileSync('./input.txt', 'utf-8').split('\r\n\r\n');
 //problem is now need to assemble picture
 //then search the image for sea monsters
@@ -107,7 +106,7 @@ const rotate90 = (square: string[], counter: boolean): string[] => {
     for (let line of square) {
         for (let [idx, char] of line.split('').entries()) {
             if (counter){
-                newSquare[idx]=`${newSquare[idx]}${char}`
+                newSquare[newSquare.length-1-idx]=`${newSquare[newSquare.length-1-idx]}${char}`
             } else {
                 newSquare[idx]=`${char}${newSquare[idx]}`
             }
@@ -162,13 +161,6 @@ const connectBottom = (currentSquare: Square, edgeAbove: string) => {
     pictureTiles.push([currentSquare.ID]);
     // console.log('before', newTransform.join('\r\n'));
     let actionTaken = '';
-    if (currentSquare.ID === 2659){
-        console.log(currentTile.join('\r\n'));
-        console.log('edge to match:')
-        console.log(edgeAbove);
-        console.log('claimed match');
-        console.log(top.reverseRepresentation);
-    }
     if (top.representation === edgeAbove){
         //just add into picture
         actionTaken = `${currentSquare.ID} top`
@@ -223,8 +215,8 @@ const connectBottom = (currentSquare: Square, edgeAbove: string) => {
     //take the bottom of newTransform and look in edge dictionary
     console.log('Action:', actionTaken);
     let bottomEdge = newTransform[newTransform.length-1];
-    let connectingEdge = (allEdges[bottomEdge] || allEdges[bottomEdge.split('').reverse().join('')]).filter(x => x!==currentSquare.ID);
-    if (connectingEdge.length !== 0 && currentSquare.ID !== 2659)
+    let connectingEdge = (allEdges[bottomEdge] || allEdges[bottomEdge.split('').reverse().join('')])?.filter(x => x!==currentSquare.ID);
+    if (connectingEdge?.length !== 0)
         connectBottom(sqDict[connectingEdge[0]], bottomEdge);
     else {
         // console.log(bottomEdge, allEdges[bottomEdge])
@@ -235,6 +227,7 @@ connectBottom(sqDict[2081], '');
 
 
 let counter = 0;
+console.log('top','----')
 for (let tile of picture){
     console.log(tile.join('\r\n'));
     console.log(pictureTiles[counter],'---');
@@ -242,6 +235,82 @@ for (let tile of picture){
 }
 console.log(pictureTiles);
 
+
+//TODO: connectRight, will need different rotations--left = top, right = bopttom
+// bottom = left, top = right
+//could just rejig the variables and see if that works ie change places
+//untested!!
+const connectRight = (currentSquare: Square, edgeLeft: string) => {
+    // console.log(currentSquare);
+    let [left, top, right, bottom] = currentSquare.edges;
+    let newTransform = currentSquare.tile;
+    let currentTile = currentSquare.tile;
+    pictureTiles.push([currentSquare.ID]);
+    // console.log('before', newTransform.join('\r\n'));
+    let actionTaken = '';
+    if (left.representation === edgeLeft){
+        //just add into picture
+        actionTaken = `${currentSquare.ID} left`
+        picture.push(newTransform);
+    }
+    else if (left.reverseRepresentation === edgeLeft) {
+        actionTaken = `${currentSquare.ID} leftr`
+        newTransform = flipOnX(currentTile)
+        picture.push(newTransform);
+    }
+    else if (right.representation === edgeLeft){
+        //just add into picture
+        actionTaken = `${currentSquare.ID} bottom`
+
+        newTransform = flipOnY(currentTile);
+        picture.push(newTransform);
+    }
+    else if (right.reverseRepresentation === edgeLeft) {
+        actionTaken = `${currentSquare.ID} bottomR`
+
+        newTransform = rotate180(currentTile)
+        picture.push(newTransform);
+    }
+    else if (bottom.representation === edgeLeft){
+        actionTaken = `${currentSquare.ID} bottom`
+
+        newTransform = rotate90(currentTile, false)
+        picture.push(newTransform);
+    }
+    else if (bottom.reverseRepresentation === edgeLeft){
+        actionTaken = `${currentSquare.ID} bottomr`
+
+        newTransform = flipOnY(rotate90(currentTile, false));
+        picture.push(newTransform);
+    }
+    else if (top.representation === edgeLeft){
+        actionTaken = `${currentSquare.ID} top`
+
+        newTransform = rotate90(currentTile, true)
+        picture.push(newTransform);
+    }
+    else if (top.reverseRepresentation === edgeLeft){
+        actionTaken = `${currentSquare.ID} topr`
+        //this trans is screwed RN, counter clockwise doesn't work
+        newTransform = flipOnX(rotate90(currentTile, true));
+        picture.push(newTransform);
+    }
+    else {
+        actionTaken = `edge`;
+        picture.push(newTransform);
+    }
+    //take the bottom of newTransform and look in edge dictionary
+    console.log('Action:', actionTaken);
+    let rightEdge = getSide(newTransform, newTransform.length-1);
+    //let bottomEdge = newTransform[newTransform.length-1]; //change to right edge logic
+    let connectingEdge = (allEdges[rightEdge] || allEdges[rightEdge.split('').reverse().join('')])?.filter(x => x!==currentSquare.ID);
+    if (connectingEdge?.length !== 0)
+        connectRight(sqDict[connectingEdge[0]], rightEdge);
+    else {
+        // console.log(bottomEdge, allEdges[bottomEdge])
+        // console.log(allEdges[bottomEdge.split('').reverse().join('')])
+    }
+}
 
 //TODO: search for sea monster here:
 //should only be found in one orientation, so may need to rotate/ flip picture to find it
