@@ -223,23 +223,12 @@ const connectBottom = (currentSquare: Square, edgeAbove: string) => {
         // console.log(allEdges[bottomEdge.split('').reverse().join('')])
     }
 }
-connectBottom(sqDict[2081], '');
 
-
-let counter = 0;
-console.log('top','----')
-for (let tile of picture){
-    console.log(tile.join('\r\n'));
-    console.log(pictureTiles[counter],'---');
-    counter++;
-}
-console.log(pictureTiles);
-
-
-//TODO: connectRight, will need different rotations--left = top, right = bopttom
-// bottom = left, top = right
-//could just rejig the variables and see if that works ie change places
-//untested!!
+//TODO: on testing, there appears to be orientation issues
+//basically--some are upside down in relation to others
+//should also devise a way to join horizontally for sanity's sake
+//key is how i read left vs right side, facing from left POV is left to right whereas it's reverse in right pov
+//so switch outcome in reverse representation
 const connectRight = (currentSquare: Square, edgeLeft: string) => {
     // console.log(currentSquare);
     let [left, top, right, bottom] = currentSquare.edges;
@@ -304,13 +293,26 @@ const connectRight = (currentSquare: Square, edgeLeft: string) => {
     let rightEdge = getSide(newTransform, newTransform.length-1);
     //let bottomEdge = newTransform[newTransform.length-1]; //change to right edge logic
     let connectingEdge = (allEdges[rightEdge] || allEdges[rightEdge.split('').reverse().join('')])?.filter(x => x!==currentSquare.ID);
-    if (connectingEdge?.length !== 0)
+    if (connectingEdge?.length !== 0 && currentSquare.ID !== 3769)
         connectRight(sqDict[connectingEdge[0]], rightEdge);
     else {
         // console.log(bottomEdge, allEdges[bottomEdge])
         // console.log(allEdges[bottomEdge.split('').reverse().join('')])
     }
 }
+
+connectRight(sqDict[2081], '');
+
+
+let counter = 0;
+console.log('top','----')
+for (let tile of picture){
+    console.log(tile.join('\r\n'));
+    console.log(pictureTiles[counter],'---');
+    counter++;
+}
+console.log(pictureTiles);
+
 
 //TODO: search for sea monster here:
 //should only be found in one orientation, so may need to rotate/ flip picture to find it
