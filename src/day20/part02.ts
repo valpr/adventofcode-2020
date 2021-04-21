@@ -238,50 +238,51 @@ const connectRight = (currentSquare: Square, edgeLeft: string) => {
     // console.log('before', newTransform.join('\r\n'));
     let actionTaken = '';
     if (left.representation === edgeLeft){
-        //just add into picture
         actionTaken = `${currentSquare.ID} left`
+        newTransform = flipOnX(currentTile)
         picture.push(newTransform);
+
     }
     else if (left.reverseRepresentation === edgeLeft) {
+        //add into picture
         actionTaken = `${currentSquare.ID} leftr`
-        newTransform = flipOnX(currentTile)
         picture.push(newTransform);
     }
     else if (right.representation === edgeLeft){
         //just add into picture
         actionTaken = `${currentSquare.ID} bottom`
+        newTransform = rotate180(currentTile)
 
-        newTransform = flipOnY(currentTile);
         picture.push(newTransform);
     }
     else if (right.reverseRepresentation === edgeLeft) {
         actionTaken = `${currentSquare.ID} bottomR`
+        newTransform = flipOnY(currentTile);
 
-        newTransform = rotate180(currentTile)
         picture.push(newTransform);
     }
     else if (bottom.representation === edgeLeft){
         actionTaken = `${currentSquare.ID} bottom`
-
         newTransform = rotate90(currentTile, false)
+
         picture.push(newTransform);
     }
     else if (bottom.reverseRepresentation === edgeLeft){
         actionTaken = `${currentSquare.ID} bottomr`
+        newTransform = flipOnX(rotate90(currentTile, false));
 
-        newTransform = flipOnY(rotate90(currentTile, false));
         picture.push(newTransform);
     }
     else if (top.representation === edgeLeft){
         actionTaken = `${currentSquare.ID} top`
 
-        newTransform = rotate90(currentTile, true)
+        newTransform = flipOnX(rotate90(currentTile, true)); //check
         picture.push(newTransform);
     }
     else if (top.reverseRepresentation === edgeLeft){
         actionTaken = `${currentSquare.ID} topr`
-        //this trans is screwed RN, counter clockwise doesn't work
-        newTransform = flipOnX(rotate90(currentTile, true));
+        newTransform = rotate90(currentTile, true)
+
         picture.push(newTransform);
     }
     else {
@@ -293,26 +294,39 @@ const connectRight = (currentSquare: Square, edgeLeft: string) => {
     let rightEdge = getSide(newTransform, newTransform.length-1);
     //let bottomEdge = newTransform[newTransform.length-1]; //change to right edge logic
     let connectingEdge = (allEdges[rightEdge] || allEdges[rightEdge.split('').reverse().join('')])?.filter(x => x!==currentSquare.ID);
-    if (connectingEdge?.length !== 0 && currentSquare.ID !== 3769)
+    // if (connectingEdge?.length !== 0 && currentSquare.ID !== 2557)
+    if (connectingEdge?.length !== 0)
         connectRight(sqDict[connectingEdge[0]], rightEdge);
     else {
-        // console.log(bottomEdge, allEdges[bottomEdge])
-        // console.log(allEdges[bottomEdge.split('').reverse().join('')])
+        console.log(rightEdge, allEdges[rightEdge])
+        console.log(allEdges[rightEdge.split('').reverse().join('')])
     }
 }
 
 connectRight(sqDict[2081], '');
 
+//connectBottom testing code
+// let counter = 0;
+// console.log('top','----')
+// for (let tile of picture){
+//     console.log(tile.join('\r\n'));
+//     console.log(pictureTiles[counter],'---');
+//     counter++;
+// }
+// console.log(pictureTiles);
 
+//connectRight testing code
 let counter = 0;
 console.log('top','----')
-for (let tile of picture){
-    console.log(tile.join('\r\n'));
-    console.log(pictureTiles[counter],'---');
-    counter++;
+let accumulator = picture[0];
+for (let tile of picture.slice(1)){
+    for (let [idx, line] of tile.entries()){
+        accumulator[idx] = accumulator[idx].concat(`|${line}`);
+    }
 }
-console.log(pictureTiles);
+console.log(accumulator.join('\r\n'));
 
 
 //TODO: search for sea monster here:
 //should only be found in one orientation, so may need to rotate/ flip picture to find it
+//how many orientations are there?
