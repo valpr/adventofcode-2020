@@ -272,8 +272,6 @@ const connectRight = (transformedSquare: string[], ID: number, edgeLeft: string)
     }
     else if (bottom.reverseRepresentation === edgeLeft){
         actionTaken = `${ID} bottomR`
-        console.log(bottom.reverseRepresentation);
-        console.log(edgeLeft);
         newTransform = flipOnX(rotate90(currentTile, false));
 
         picture.push(newTransform);
@@ -295,7 +293,7 @@ const connectRight = (transformedSquare: string[], ID: number, edgeLeft: string)
         picture.push(newTransform);
     }
     //take the bottom of newTransform and look in edge dictionary
-    console.log('Action:', actionTaken);
+    // console.log('Action:', actionTaken);
     let rightEdge = getSide(newTransform, newTransform.length-1);
     //let bottomEdge = newTransform[newTransform.length-1]; //change to right edge logic
     let connectingEdge = (allEdges[rightEdge] || allEdges[rightEdge.split('').reverse().join('')])?.filter(x => x!==ID);
@@ -303,8 +301,8 @@ const connectRight = (transformedSquare: string[], ID: number, edgeLeft: string)
     //if (connectingEdge?.length !== 0)
         connectRight(sqDict[connectingEdge[0]].tile, sqDict[connectingEdge[0]].ID, rightEdge);
     else {
-        console.log(rightEdge, allEdges[rightEdge])
-        console.log(allEdges[rightEdge.split('').reverse().join('')])
+        // console.log(rightEdge, allEdges[rightEdge])
+        // console.log(allEdges[rightEdge.split('').reverse().join('')])
     }
 }
 //initial testing code
@@ -345,6 +343,7 @@ const leftEdgeIDs = [2081, 3697, 1399, 2221, 3889, 2347, 1873, 1523, 1583, 2659,
 
 //to fix: row of 2129, 2441, 2659
 const assemble = (leftEdgeIDs: number[]) => {
+    let lastLine = '';
     for (let [idx, ID] of leftEdgeIDs.entries()){
         picture = [];
         connectRight(fullPicture[idx], ID, ''); //doesn't work rn because they are not oriented correctly
@@ -360,6 +359,10 @@ const assemble = (leftEdgeIDs: number[]) => {
             }
         }
         fullPicture[idx] = accumulator;
+        if (lastLine !== '' && accumulator[0] !== lastLine){
+            errorCount++;
+        }
+        lastLine = accumulator[accumulator.length-1];
         console.log(accumulator.join('\r\n'));
         console.log(`line of ${ID}-error: ${errorCount}---------------------------------------------------------------------------------------`)
     }
