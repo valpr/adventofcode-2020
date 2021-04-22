@@ -1,15 +1,5 @@
 import {readFileSync} from 'fs';
 let tiles: string[] = readFileSync('./input.txt', 'utf-8').split('\r\n\r\n');
-//problem is now need to assemble picture
-//then search the image for sea monsters
-//start from corner, find 2 adjacent squares
-//problem is I don't know what needs to be flipped/rotated
-//for first corner only:
-//--based on edges that match, if top edge matches then flip first tile on y axis
-//--if left edge matches flip first tile on x axis
-//all other edges should be correctly oriented to match after, may need to flip tiles that are adding
-//since edge collection exists, should be easy to find which tile to get next.
-//after that need to take out border of each tile
 
 type Edge = { //Add # Number?
     fromID: number;
@@ -78,11 +68,6 @@ for (let rep of tiles) {
     sqDict[newSq.ID] = newSq;
 }
 
-//TODO: assemble picture here
-//need methods to flip array on x and flip array on y
-//also need methods to rotate array
-//[ 1049, 2081, 2129, 3229 ] is corner edge array
-
 const flipOnY = (square: string[]) => { //
     let newSquare = [];
 
@@ -121,38 +106,10 @@ const rotate180 = (square: string[]) => {
     return square;
 }
 
-/*TODO: logic for assembling square
-start with corner X using square dict
-find the 2 squares that connect with it in EdgeCollection (using edges)
-find which edges are connected on square X
-*/
 let picture : string[][] = [];
 let pictureTiles :number[][] = [];
 
-//Logic for attaching a tile to a tile on the left
-//if the left edge connects nothing, if the left edge reverse connects, flip Y
-//if the right edge connects flip tile by Y, if the right edge reverse connects, rotate 180
-//if the top edge connects, rotate 90 counter clock, if reverse connects, rotate90 counter and flip y
-//if the bottom edge connects rotate 90 clockwise, if referse connects, rotate 90 clock and flip y
 
-//FIRST STEP: find out which edges on firstCorner are matching
-//connected if edge length is 2
-// console.log(allEdges[left.representation], allEdges[left.reverseRepresentation]);
-// console.log(allEdges[right.representation], allEdges[right.reverseRepresentation]);
-// console.log(allEdges[top.representation], allEdges[top.reverseRepresentation]);
-// console.log(allEdges[bottom.representation], allEdges[bottom.reverseRepresentation]);
-//2081 has right connection and bottom connection without rotating so start here
-//IDEA: do left edge first, then expand right
-
-/*
-End result of this function is to insert into picture the right tile string representation
-    //Logic for attaching a tile to a tile above it
-    //if top edge connects, nothing, if top edge reverse connects, flip y
-    //if left edge connects, rotate 90 clock, if left edge R connects, rotate 90 clock and flip on y
-    //if right edge connects, rotate 90 counterclock, if right edge R connects, rotate 90 counterclock and flip on y
-    //if bottom edge connects, flip on x, if bottom edge R connects, rotate 180
-    //when flipping or rotating, should re-arrange square edges?
-*/
 const connectBottom = (currentSquare: Square, edgeAbove: string) => {
     // console.log(currentSquare);
     let [left, top, right, bottom] = currentSquare.edges;
@@ -224,11 +181,7 @@ const connectBottom = (currentSquare: Square, edgeAbove: string) => {
     }
 }
 
-//TODO: on testing, there appears to be orientation issues
-//basically--some are upside down in relation to others
-//should also devise a way to join horizontally for sanity's sake
-//key is how i read left vs right side, facing from left POV is left to right whereas it's reverse in right pov
-//so switch outcome in reverse representation
+
 const connectRight = (transformedSquare: string[], ID: number, edgeLeft: string) => {
     // console.log(currentSquare);
     let [left, top, right, bottom] = sqDict[ID].edges;
@@ -334,6 +287,11 @@ connectBottom(sqDict[2081], '');
 
 //const fullPicture = picture.slice(-2);
 const fullPicture = picture;
+// fullPicture.forEach(a => {
+//     console.log(a.slice(1, -1).join('\r\n'));
+//     console.log('--')
+//     strippedPicture.push(Array.from(a.slice(1, -1))); //strip first and last line of each
+// })
 
 //instead of passing in square, pass transformed stringArray, and currentSquare ID
 
@@ -341,7 +299,6 @@ const fullPicture = picture;
 const leftEdgeIDs = [2081, 3697, 1399, 2221, 3889, 2347, 1873, 1523, 1583, 2659, 2441, 2129];
 //const leftEdgeIDs = [ 2441, 2129];
 
-//to fix: row of 2129, 2441, 2659
 const assemble = (leftEdgeIDs: number[]) => {
     let lastLine = '';
     for (let [idx, ID] of leftEdgeIDs.entries()){
@@ -363,13 +320,28 @@ const assemble = (leftEdgeIDs: number[]) => {
             errorCount++;
         }
         lastLine = accumulator[accumulator.length-1];
-        console.log(accumulator.join('\r\n'));
-        console.log(`line of ${ID}-error: ${errorCount}---------------------------------------------------------------------------------------`)
+        // console.log(accumulator.join('\r\n'));
+        // console.log(`line of ${ID}-error: ${errorCount}--------------------`)
     }
 }
 
 assemble(leftEdgeIDs);
+console.log(fullPicture);
+const stripTileBorders = (fullPicture: string[][]): string[][] => {
+    const strippedPicture: string[][] = [];
+    fullPicture.forEach(a => {
+        strippedPicture.push(Array.from(a.slice(1, -1)
+            .map(line => line.split('|')
+            .map(tileLine => tileLine.slice(1,-1))
+            .join('')))); //strip first and last line of each tile
+    })
+    return strippedPicture;
+}
 
+
+const findingSeaMonsters: string[][] =  stripTileBorders(fullPicture);
+//can test on testInput 2
+console.log(findingSeaMonsters);
 //TODO: search for sea monster here:
 //should only be found in one orientation, so may need to rotate/ flip picture to find it
 //how many orientations are there?
