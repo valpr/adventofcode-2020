@@ -213,7 +213,7 @@ const connectBottom = (currentSquare: Square, edgeAbove: string) => {
         picture.push(newTransform);
     }
     //take the bottom of newTransform and look in edge dictionary
-    console.log('Action:', actionTaken);
+    //console.log('Action:', actionTaken);
     let bottomEdge = newTransform[newTransform.length-1];
     let connectingEdge = (allEdges[bottomEdge] || allEdges[bottomEdge.split('').reverse().join('')])?.filter(x => x!==currentSquare.ID);
     if (connectingEdge?.length !== 0)
@@ -253,25 +253,27 @@ const connectRight = (transformedSquare: string[], ID: number, edgeLeft: string)
     }
     else if (right.representation === edgeLeft){
         //just add into picture
-        actionTaken = `${ID} bottom`
-        newTransform = rotate180(currentTile)
+        actionTaken = `${ID} right`
+        newTransform = flipOnY(currentTile)
 
         picture.push(newTransform);
     }
     else if (right.reverseRepresentation === edgeLeft) {
-        actionTaken = `${ID} bottomR`
-        newTransform = flipOnY(currentTile);
+        actionTaken = `${ID} rightR`
+        newTransform = rotate180(currentTile);
 
         picture.push(newTransform);
     }
     else if (bottom.representation === edgeLeft){
         actionTaken = `${ID} bottom`
-        newTransform = rotate90(currentTile, false)
+        newTransform = (rotate90(currentTile, false));
 
         picture.push(newTransform);
     }
     else if (bottom.reverseRepresentation === edgeLeft){
-        actionTaken = `${ID} bottomr`
+        actionTaken = `${ID} bottomR`
+        console.log(bottom.reverseRepresentation);
+        console.log(edgeLeft);
         newTransform = flipOnX(rotate90(currentTile, false));
 
         picture.push(newTransform);
@@ -297,12 +299,12 @@ const connectRight = (transformedSquare: string[], ID: number, edgeLeft: string)
     let rightEdge = getSide(newTransform, newTransform.length-1);
     //let bottomEdge = newTransform[newTransform.length-1]; //change to right edge logic
     let connectingEdge = (allEdges[rightEdge] || allEdges[rightEdge.split('').reverse().join('')])?.filter(x => x!==ID);
-    // if (connectingEdge?.length !== 0 && currentSquare.ID !== 2557)
     if (connectingEdge?.length !== 0)
+    //if (connectingEdge?.length !== 0)
         connectRight(sqDict[connectingEdge[0]].tile, sqDict[connectingEdge[0]].ID, rightEdge);
     else {
-        // console.log(rightEdge, allEdges[rightEdge])
-        // console.log(allEdges[rightEdge.split('').reverse().join('')])
+        console.log(rightEdge, allEdges[rightEdge])
+        console.log(allEdges[rightEdge.split('').reverse().join('')])
     }
 }
 //initial testing code
@@ -332,12 +334,14 @@ const connectRight = (transformedSquare: string[], ID: number, edgeLeft: string)
 connectBottom(sqDict[2081], '');
 //connectBottom(sqDict[2081], '');
 
-const fullPicture = picture.slice(-3);
+//const fullPicture = picture.slice(-2);
+const fullPicture = picture;
+
 //instead of passing in square, pass transformed stringArray, and currentSquare ID
 
 
-//const leftEdgeIDs = [2081, 3697, 1399, 2221, 3889, 2347, 1873, 1523, 1583, 2659, 2441, 2129];
-const leftEdgeIDs = [2659, 2441, 2129];
+const leftEdgeIDs = [2081, 3697, 1399, 2221, 3889, 2347, 1873, 1523, 1583, 2659, 2441, 2129];
+//const leftEdgeIDs = [ 2441, 2129];
 
 //to fix: row of 2129, 2441, 2659
 const assemble = (leftEdgeIDs: number[]) => {
@@ -345,16 +349,19 @@ const assemble = (leftEdgeIDs: number[]) => {
         picture = [];
         connectRight(fullPicture[idx], ID, ''); //doesn't work rn because they are not oriented correctly
         //will need to pipe in connectBottom results instead of attempting to cheat
-
+        let errorCount = 0;
         let accumulator = picture[0];
         for (let tile of picture.slice(1)){
             for (let [idx, line] of tile.entries()){
+                if (accumulator[idx].charAt(accumulator[idx].length-1) !== line[0]){
+                    errorCount++;
+                }
                 accumulator[idx] = accumulator[idx].concat(`|${line}`);
             }
         }
         fullPicture[idx] = accumulator;
         console.log(accumulator.join('\r\n'));
-        console.log(`line of ${ID}----------------------------------------------------------------------------------------`)
+        console.log(`line of ${ID}-error: ${errorCount}---------------------------------------------------------------------------------------`)
     }
 }
 
@@ -363,4 +370,4 @@ assemble(leftEdgeIDs);
 //TODO: search for sea monster here:
 //should only be found in one orientation, so may need to rotate/ flip picture to find it
 //how many orientations are there?
-console.log(fullPicture);
+//console.log(fullPicture);
