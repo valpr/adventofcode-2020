@@ -1,4 +1,5 @@
 import {readFileSync} from 'fs';
+
 let tiles: string[] = readFileSync('./input.txt', 'utf-8').split('\r\n\r\n');
 
 type Edge = { //Add # Number?
@@ -326,7 +327,7 @@ const assemble = (leftEdgeIDs: number[]) => {
 }
 
 assemble(leftEdgeIDs);
-console.log(fullPicture);
+// console.log(fullPicture);
 const stripTileBorders = (fullPicture: string[][]): string[][] => {
     const strippedPicture: string[][] = [];
     fullPicture.forEach(a => {
@@ -338,11 +339,106 @@ const stripTileBorders = (fullPicture: string[][]): string[][] => {
     return strippedPicture;
 }
 
+//const unrotatedSea: string[] =  rotate90(stripTileBorders(fullPicture).reduceRight((accumulator, currentValue) => accumulator.concat(currentValue)), true);
 
-const findingSeaMonsters: string[][] =  stripTileBorders(fullPicture);
+//const unrotatedSea: string[] =  stripTileBorders(fullPicture).reduceRight((accumulator, currentValue) => accumulator.concat(currentValue));
+const unrotatedSea = readFileSync('./input2.txt', 'utf-8').split('\r\n');
+console.log(unrotatedSea.join('\r\n'))
 //can test on testInput 2
-console.log(findingSeaMonsters);
+// console.log(unrotatedSea);
 //TODO: search for sea monster here:
 //should only be found in one orientation, so may need to rotate/ flip picture to find it
-//how many orientations are there?
-//console.log(fullPicture);
+//how many orientations are there?  Is there a better way than just checking every orientation?
+//Should I just check horizontally and vertically for the binary string or the reverse value, then make the decision after?
+//how to search for sea monster: theory on easy way would be to use bit manipulation
+//convert each 20 line into 1s and 0s
+//then AND it with (Sea monster middle binary representation) 1000110000110000111
+//then can check top and bottom
+/*
+                  # 
+#    ##    ##    ###
+ #  #  #  #  #  #   
+ 00000000000000000010
+ 10000110000110000111
+ 01001001001001001000
+
+ better to AND because string comparison is expensive I think?
+rolling hash?
+can shift number each time a # or . is added
+1110000110000110001
+logic:
+start at index 1 of string array (second row)
+get first 20 chars, convert to binary rep (parseInt(num, 2))
+AND it with rep and reverse rep, if one of them is found then check top and bottom binary rep
+Mark all seamonster pieces as * (pretty simple)
+
+Otherwise, must keep going so shift left one bit '<<1' and add one in binary if not '.'
+
+At the end, if seamonster is found then calculate 'roughness' of water by counting # and * in the array
+*/
+const getBinaryRep = (line: string):number => {
+    let num = 0
+    line.split('').forEach(letter => {
+        let add = letter !== '.' ? 1 : 0;
+        num = num << 1;
+        num += add;
+    })
+    return num;
+}
+
+const shiftAndAdd = (char: string, currentBinary: number ) => {
+    currentBinary = currentBinary << 1;
+    currentBinary += char === '.' ? 0 : 1;
+    return currentBinary;
+}
+
+//given current Idx, check if top row is
+// const checkTop = (currentLine: number, currentIdx: number, sea: string[]): boolean => {
+//     if (sea[currentLine-1][currentIdx-1] === '#') return true;
+//     return false;
+// }
+// const checkBottom = (currentLine: number, currentIdx: number, sea: string[]) => {
+//     const binaryBottom = parseInt('01001001001001001000',2)
+//     if (getBinaryRep(sea[currentLine+1]
+//         .slice(currentIdx-19, currentIdx+1)) //if currentIdx is 19 then start becomes element 0, and last element is element 19
+//         === binaryBottom) return true;
+//     return false;
+// }
+const checkSeaMonster = (currentLine: number, currentIdx: number, sea: string[]): boolean => {
+    const binaryBottom = parseInt('01001001001001001000',2)
+
+    if (sea[currentLine-1][currentIdx-1] === '#' 
+    && ((getBinaryRep(sea[currentLine+1]
+        .slice(currentIdx-19, currentIdx+1)) & binaryBottom)) //if currentIdx is 19 then start becomes element 0, and last element is element 19
+        === binaryBottom) return true;
+    return false;
+}
+let target = parseInt('10000110000110000111', 2)
+let currentLine = 1;
+let seaMonsterWidth = 20;
+for (let line of unrotatedSea.slice(1,-1)) { //take off first and last
+    let binaryRep = getBinaryRep(line.slice(0,seaMonsterWidth));
+    if ((binaryRep & target) === target) {
+        if (checkSeaMonster(currentLine, seaMonsterWidth-1, unrotatedSea)){
+            //mark #'s as *s
+            console.log('smonster')
+        }
+    }
+    for (let [idx, char] of line.slice(seaMonsterWidth).split('').entries()){
+        binaryRep = shiftAndAdd(char, binaryRep);
+        // console.log((binaryRep & target));
+        if ((binaryRep & target) === target) {
+            console.log('Current Line: ',currentLine);
+            console.log('currentIndex: ', idx+seaMonsterWidth);
+            console.log('mainBody found?')
+            let currentEnd= idx+seaMonsterWidth;
+            //right now, checkSeaMonster doesn't work
+            if (checkSeaMonster(currentLine, currentEnd, unrotatedSea)){
+                //mark #'s as *s
+                console.log('smonster')
+
+            }
+        }
+    }
+    currentLine++;
+}
