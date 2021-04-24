@@ -1,4 +1,5 @@
 import {readFileSync} from 'fs';
+import { join } from 'node:path';
 
 let tiles: string[] = readFileSync('./input.txt', 'utf-8').split('\r\n\r\n');
 
@@ -328,6 +329,8 @@ const assemble = (leftEdgeIDs: number[]) => {
 
 assemble(leftEdgeIDs);
 // console.log(fullPicture);
+//somehow gets screwed when assembling picture?
+//Issue: top Array is at the bottom
 const stripTileBorders = (fullPicture: string[][]): string[][] => {
     const strippedPicture: string[][] = [];
     fullPicture.forEach(a => {
@@ -341,8 +344,8 @@ const stripTileBorders = (fullPicture: string[][]): string[][] => {
 
 //const unrotatedSea: string[] =  rotate90(stripTileBorders(fullPicture).reduceRight((accumulator, currentValue) => accumulator.concat(currentValue)), true);
 
-//const unrotatedSea: string[] =  stripTileBorders(fullPicture).reduceRight((accumulator, currentValue) => accumulator.concat(currentValue));
-const unrotatedSea = readFileSync('./input2.txt', 'utf-8').split('\r\n');
+const unrotatedSea: string[] =  flipOnY(stripTileBorders(fullPicture).reduce((accumulator, currentValue) => accumulator.concat(currentValue)));
+//const unrotatedSea = readFileSync('./input2.txt', 'utf-8').split('\r\n');
 console.log(unrotatedSea.join('\r\n'))
 //can test on testInput 2
 // console.log(unrotatedSea);
@@ -406,39 +409,110 @@ const shiftAndAdd = (char: string, currentBinary: number ) => {
 // }
 const checkSeaMonster = (currentLine: number, currentIdx: number, sea: string[]): boolean => {
     const binaryBottom = parseInt('01001001001001001000',2)
-
-    if (sea[currentLine-1][currentIdx-1] === '#' 
+    // console.log(currentLine, currentIdx);
+    if (sea[currentLine-1][currentIdx-1] !== '.' 
     && ((getBinaryRep(sea[currentLine+1]
         .slice(currentIdx-19, currentIdx+1)) & binaryBottom)) //if currentIdx is 19 then start becomes element 0, and last element is element 19
         === binaryBottom) return true;
+    console.log('Current Line: ',currentLine);
+    console.log('currentIndex: ', currentIdx);
+    console.log(sea[currentLine-1][currentIdx-1])
+    console.log('01001001001001001000')
+    console.log(sea[currentLine+1]
+        .slice(currentIdx-19, currentIdx+1));
+    console.log('-----')
     return false;
 }
-let target = parseInt('10000110000110000111', 2)
-let currentLine = 1;
-let seaMonsterWidth = 20;
-for (let line of unrotatedSea.slice(1,-1)) { //take off first and last
-    let binaryRep = getBinaryRep(line.slice(0,seaMonsterWidth));
-    if ((binaryRep & target) === target) {
-        if (checkSeaMonster(currentLine, seaMonsterWidth-1, unrotatedSea)){
-            //mark #'s as *s
-            console.log('smonster')
+
+const markSeaMonster = (currentLine: number, currentIdx: number, sea: string[]) => {
+    //have to insert in place on the line...
+    let middleLine = '10000110000110000111';
+    let bottomLine = '01001001001001001000';
+    sea[currentLine-1] = `${sea[currentLine-1].slice(0, currentIdx-1)}*${sea[currentLine-1].slice(currentIdx)}`;
+    let newMiddle = '';
+    let newBottom = '';
+    let startingIdx = currentIdx-19;
+    for (let i = 0; i < middleLine.length; i++) {
+        if (middleLine[i] === '1') {
+            newMiddle = `${newMiddle}*`;
+        } else {
+            newMiddle = `${newMiddle}${sea[currentLine][i+startingIdx]}`
+        }
+        if (bottomLine[i] === '1') {
+            newBottom = `${newBottom}*`;
+        } else {
+            newBottom = `${newBottom}${sea[currentLine+1][i+startingIdx]}`
         }
     }
-    for (let [idx, char] of line.slice(seaMonsterWidth).split('').entries()){
-        binaryRep = shiftAndAdd(char, binaryRep);
-        // console.log((binaryRep & target));
-        if ((binaryRep & target) === target) {
-            console.log('Current Line: ',currentLine);
-            console.log('currentIndex: ', idx+seaMonsterWidth);
-            console.log('mainBody found?')
-            let currentEnd= idx+seaMonsterWidth;
-            //right now, checkSeaMonster doesn't work
-            if (checkSeaMonster(currentLine, currentEnd, unrotatedSea)){
-                //mark #'s as *s
-                console.log('smonster')
+    sea[currentLine] = `${sea[currentLine].slice(0, startingIdx)}${newMiddle}${sea[currentLine].slice(currentIdx+1)}`;
+    sea[currentLine+1] = `${sea[currentLine+1].slice(0, startingIdx)}${newBottom}${sea[currentLine+1].slice(currentIdx+1)}`;
 
+    return sea;
+}
+
+const checkSea = (sea: string[]):number => {
+    let target = parseInt('10000110000110000111', 2)
+    let copiedSea = Array.from(sea);
+    let currentLine = 1;
+    let seaMonsterWidth = 20;
+    let c = 0;
+
+    for (let line of sea.slice(1,-1)) { //take off first and last
+        let binaryRep = getBinaryRep(line.slice(0,seaMonsterWidth));
+
+        if ((binaryRep & target) === target) {
+            // console.log('Current Line: ',currentLine);
+            // console.log('currentIndex: ', seaMonsterWidth-1);
+
+            if (checkSeaMonster(currentLine, seaMonsterWidth-1, sea)){
+                //mark #'s as *s
+                c++;
+
+                //console.log('smonster')
+                copiedSea = markSeaMonster(currentLine, seaMonsterWidth-1, copiedSea);
+            }
+        }
+        for (let [idx, char] of line.slice(seaMonsterWidth).split('').entries()){
+            binaryRep = shiftAndAdd(char, binaryRep);
+            // console.log((binaryRep & target));
+            if ((binaryRep & target) === target) {
+                // console.log('Current Line: ',currentLine);
+                // console.log('currentIndex: ', idx+seaMonsterWidth);
+                let currentEnd= idx+seaMonsterWidth;
+                //right now, checkSeaMonster doesn't work
+                if (checkSeaMonster(currentLine, currentEnd, sea)){
+                    //mark #'s as *s
+                    c++;
+
+                    //console.log('smonster')
+                    copiedSea = markSeaMonster(currentLine, currentEnd, copiedSea);
+
+                }
+            }
+        }
+        currentLine++;
+    }
+    let hashCount = 0
+    for (let line of copiedSea) {
+        for (let char of line) {
+            if (char === '#') {
+                hashCount++;
             }
         }
     }
-    currentLine++;
+
+    // for (let i = 0; i < sea.length; i++) {
+    //     for (let j = 0; j < sea[0].length; j++){
+    //         if (copiedSea[i][j] !== sea[i][j]){
+    //             console.log(copiedSea[i][j], sea[i][j]);
+    //         }
+    //     }
+    // }
+
+    console.log(sea.join('\r\n'));
+    console.log('---')
+    console.log(copiedSea.join('\r\n'));
+    console.log(c)
+    return hashCount;
 }
+console.log(checkSea(unrotatedSea));
