@@ -232,7 +232,7 @@ const connectRight = (transformedSquare: string[], ID: number, edgeLeft: string)
 }
 connectBottom(sqDict[2081], '');
 const fullPicture = picture;
-const leftEdgeIDs = [2081, 3697, 1399, 2221, 3889, 2347, 1873, 1523, 1583, 2659, 2441, 2129];
+const leftEdgeIDs = pictureTiles.reduce((accumulator, current) => accumulator.concat(current));
 const assemble = (leftEdgeIDs: number[]) => {
     let lastLine = '';
     for (let [idx, ID] of leftEdgeIDs.entries()){
@@ -269,7 +269,6 @@ const stripTileBorders = (fullPicture: string[][]): string[][] => {
     return strippedPicture;
 }
 const unrotatedSea: string[] =  flipOnY(stripTileBorders(fullPicture).reduce((accumulator, currentValue) => accumulator.concat(currentValue)));
-console.log(unrotatedSea.join('\r\n'))
 const getBinaryRep = (line: string):number => {
     let num = 0
     line.split('').forEach(letter => {
@@ -353,3 +352,4 @@ const checkSea = (sea: string[]):number => {
     return hashCount;
 }
 console.log(checkSea(unrotatedSea));
+console.timeEnd();

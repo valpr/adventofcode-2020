@@ -1,9 +1,10 @@
 Part 20 post mortem:
-What a mess
+What a mission
+Screwed myself over Part 1 by being lazy and only getting corner pieces
 
 reduceRight starts from end of array (Desc order)
-Binary comparison was very fast (10x faster! than other solution 180ms vs 18ms)
+rolling bitwise comparison was very fast (5-6x faster! than regex solution)
 Square should have been configured clockwise to save on debugging time when comparing (ie read the right edge top to bottom, left edge bottom to top)
 Edge collection was a good idea and made part1 ez
 
-I did a jank version of BFS, refine next time
+I did a jank version of BFS, refine next time (connect Bottom -> connectRight)
