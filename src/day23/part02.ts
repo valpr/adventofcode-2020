@@ -10,7 +10,7 @@ const NUMLOOPS = 10000000;
 //instead of looking through the list each time, better to create an array
 //allows you to lookup the node that you want to find
 //maintain linked list structure, but avoid n-length search every loop
-let lookupArray:Node[] = (Array(HIGHESTVALUE)).map(x => ({value: -1, next: null}));
+let lookupArray:Node[] = (Array(9)).map(x => ({value: -1, next: null}));
 
 
 const parseCups = (cups: number[]):Node => {
@@ -39,7 +39,7 @@ const parseCups = (cups: number[]):Node => {
         
         currentNode.next = newNode;
         //move current to next
-        lookupArray[newNode.value -1] = newNode;
+        lookupArray.push(newNode);
         currentNode = newNode;
         currentValue++;
     }
