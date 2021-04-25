@@ -6,6 +6,11 @@ type Node = {
     next: Node | null;
 }
 const HIGHESTVALUE = 1000000;
+const NUMLOOPS = 10000000;
+//instead of looking through the list each time, better to create an array
+//allows you to lookup the node that you want to find
+//maintain linked list structure, but avoid n-length search every loop
+let lookupArray:Node[] = (Array(HIGHESTVALUE)).map(x => ({value: -1, next: null}));
 
 
 const parseCups = (cups: number[]):Node => {
@@ -13,6 +18,7 @@ const parseCups = (cups: number[]):Node => {
         value: cups[0],
         next: null
     }
+    lookupArray[startingNode.value-1] = startingNode;
     let currentNode = startingNode;
     for (let cup of cups.slice(1)) {
         let newNode: Node = {
@@ -21,6 +27,7 @@ const parseCups = (cups: number[]):Node => {
         };
         currentNode.next = newNode;
         //move current to next
+        lookupArray[newNode.value -1] = newNode;
         currentNode = newNode;
     }
     let currentValue = 10;
@@ -32,6 +39,7 @@ const parseCups = (cups: number[]):Node => {
         
         currentNode.next = newNode;
         //move current to next
+        lookupArray[newNode.value -1] = newNode;
         currentNode = newNode;
         currentValue++;
     }
@@ -66,11 +74,7 @@ const searchDestination = (currentCup: Node, removedCups: Node): Node => {
             searchValue = HIGHESTVALUE;
         }
     }
-    let destinationCup = currentCup;
-    while (destinationCup && destinationCup.next && destinationCup.value !== searchValue) {
-        destinationCup = destinationCup.next;
-    }
-    return destinationCup;
+    return lookupArray[searchValue-1];
 }
 
 const replaceThree = (destinationCup: Node, removedCups: Node) => {
@@ -84,44 +88,21 @@ const replaceThree = (destinationCup: Node, removedCups: Node) => {
 }
 
 const playRound = (currentCup: Node):Node => {
-    //console.log('start')
     let removedCups = removeThree(currentCup);
-    //console.log('removed')
     let destinationCup: Node = searchDestination(currentCup, removedCups); 
-    //console.log('destination found', destinationCup)
     replaceThree(destinationCup, removedCups);
-    //console.log('replaced three');
     return currentCup.next || {value: 0, next: null};
 }
 
-const findOne = (currentCup:Node):Node => {
-    while(currentCup && currentCup.next && currentCup.value !== 1) {
-        currentCup = currentCup.next;
-    }
-    return currentCup;
-}
-
-
-
 let newCups = parseCups(cups);
 
-for (let i = 0; i < 10000000; i++){
+for (let i = 0; i < NUMLOOPS; i++){
     newCups = playRound(newCups);
-    if (i % 100000 === 0){
-        console.log(i);
-        console.timeLog();
-    }
 }
 
-
-
-let oneCup:Node | null = findOne(newCups);
+let oneCup:Node = lookupArray[0];
 let displayArray = [oneCup.next?.value, oneCup.next?.next?.value];
-// oneCup = oneCup.next;
-// while (oneCup && oneCup.next && oneCup.value !== 1) {
-//     displayArray.push(oneCup.value);
-//     oneCup = oneCup.next;
-// }
+
 console.log(displayArray.join(','));
 console.log(displayArray[0] && displayArray[1] ? displayArray[0] * displayArray[1] : 'error');
 console.timeEnd();
